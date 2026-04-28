@@ -72,20 +72,20 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-3xl mb-6">
             <Scale className="w-10 h-10 text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-4xl font-black mb-3 leading-tight">LegalMatch</h1>
+          <h1 className="text-4xl font-black mb-3 leading-tight">All In One Consulting</h1>
           <p className="text-xl text-violet-100 font-medium mb-2">
-            Consulenza legale professionale,<br />semplice e veloce.
+            All your business consultants,<br />in one platform.
           </p>
           <p className="text-violet-200 text-sm leading-relaxed mb-10">
-            Apri un ticket legale e ricevi una risposta da un avvocato o notaio
-            specializzato entro 24 ore.
+            Open a ticket and get a response from a verified specialist
+            across legal, tax, safety, finance, and tech — within 24 hours.
           </p>
 
           <div className="space-y-3 text-left">
             {[
-              { Icon: Shield, title: 'Professionisti verificati', sub: 'Avvocati e notai iscritti all\'albo' },
-              { Icon: Clock,  title: 'Risposta in 24 ore',        sub: 'Assegnazione automatica immediata' },
-              { Icon: Scale,  title: 'Piani flessibili',          sub: 'Basic e Premium per ogni esigenza' },
+              { Icon: Shield, title: 'Verified specialists',   sub: '14 consulting areas covered' },
+              { Icon: Clock,  title: 'Response within 24h',    sub: 'Automatic assignment, no waiting' },
+              { Icon: Scale,  title: 'Flexible plans',         sub: 'Pro, Max and Enterprise' },
             ].map(({ Icon, title, sub }) => (
               <div key={title} className="flex items-center gap-3 bg-white/10 rounded-2xl px-4 py-3">
                 <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
@@ -109,17 +109,17 @@ export default function LoginPage() {
           <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-600">
             <Scale className="w-7 h-7 text-white" strokeWidth={2.25} />
           </span>
-          <h1 className="text-2xl font-bold text-violet-700 mt-2">LegalMatch</h1>
+          <h1 className="text-2xl font-bold text-violet-700 mt-2">All In One Consulting</h1>
         </div>
 
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-gray-800 mb-1">
-            {mode === 'login' ? 'Bentornato' : 'Crea il tuo account'}
+            {mode === 'login' ? 'Welcome back' : 'Create your account'}
           </h2>
           <p className="text-gray-500 text-sm mb-8">
             {mode === 'login'
-              ? 'Accedi per gestire i tuoi ticket legali'
-              : 'Inizia a ricevere consulenza legale professionale'}
+              ? 'Sign in to manage your consulting tickets'
+              : 'Start getting professional consulting support'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,7 +128,7 @@ export default function LoginPage() {
             {mode === 'register' && (
               <>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-2">Sei un</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">I am a</label>
                   <div className="grid grid-cols-2 gap-2">
                     {(['cliente', 'professionista'] as RuoloUtente[]).map((r) => (
                       <button
@@ -141,7 +141,7 @@ export default function LoginPage() {
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
                       >
-                        {r === 'cliente' ? '👤 Cliente' : '⚖️ Professionista'}
+                        {r === 'cliente' ? '👤 Client' : '💼 Consultant'}
                       </button>
                     ))}
                   </div>
@@ -149,21 +149,22 @@ export default function LoginPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Nome</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">First name</label>
                     <input type="text" value={nome} onChange={(e) => setNome(e.target.value)}
-                      placeholder="Mario"
+                      placeholder="John"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Cognome</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Last name</label>
                     <input type="text" value={cognome} onChange={(e) => setCognome(e.target.value)}
-                      placeholder="Rossi"
+                      placeholder="Smith"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Username</label>
+
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
@@ -177,14 +178,14 @@ export default function LoginPage() {
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="mario@esempio.com"
+                placeholder="john@company.com"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimo 6 caratteri"
+                placeholder="At least 6 characters"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
             </div>
 
@@ -194,18 +195,18 @@ export default function LoginPage() {
               className="w-full py-3 bg-gradient-to-r from-violet-600 to-violet-800 text-white font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity text-sm mt-2 disabled:opacity-60"
             >
               {submitting
-                ? (mode === 'login' ? 'Accesso…' : 'Creazione account…')
-                : (mode === 'login' ? 'Accedi →' : 'Crea account →')}
+                ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
+                : (mode === 'login' ? 'Sign in →' : 'Create account →')}
             </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            {mode === 'login' ? 'Non hai un account?' : 'Hai già un account?'}{' '}
+            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
               onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
               className="text-violet-600 font-semibold hover:underline"
             >
-              {mode === 'login' ? 'Registrati' : 'Accedi'}
+              {mode === 'login' ? 'Sign up' : 'Sign in'}
             </button>
           </p>
         </div>

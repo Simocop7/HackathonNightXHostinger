@@ -172,9 +172,24 @@ create table if not exists public.tickets (
   constraint ticket_desc_non_vuota   check (trim(descrizione) <> '')
 );
 
+-- IMMUTABLE helper for UTC date extraction.
+-- AT TIME ZONE / timestamptz::date are STABLE (session-TimeZone-dependent) and
+-- are rejected inside index expressions even inside a declared-IMMUTABLE wrapper.
+-- Subtracting two absolute timestamptz literals is genuinely IMMUTABLE:
+-- it does not depend on any session GUC.
+create or replace function public.to_utc_date(ts timestamptz)
+returns date language sql immutable parallel safe as
+$$
+  select '1970-01-01'::date
+       + (extract(epoch from (ts - '1970-01-01 00:00:00+00'::timestamptz)) / 86400)::int
+$$;
+
+-- Drop explicitly so a re-run replaces any stale version (IF NOT EXISTS would skip it).
+drop index if exists public.idx_tickets_one_per_day;
+
 -- Regola «1 ticket attivo per giorno per cliente»
-create unique index if not exists idx_tickets_one_per_day
-  on public.tickets (cliente_id, (created_at::date))
+create unique index idx_tickets_one_per_day
+  on public.tickets (cliente_id, public.to_utc_date(created_at))
   where stato in ('aperto', 'in_lavorazione', 'richiede_info');
 
 create index if not exists idx_tickets_cliente_id     on public.tickets(cliente_id);

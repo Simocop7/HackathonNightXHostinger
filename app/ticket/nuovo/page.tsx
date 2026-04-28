@@ -6,28 +6,28 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getCurrentUser } from '../../_lib/db';
-import { AREE_LEGALI } from '../../_lib/constants';
+import { SERVICE_AREAS } from '../../_lib/constants';
 import type { Profilo, TicketTipo, TicketPriorita, RateLimitError } from '../../_lib/types';
 
 const TIPO_OPTIONS: { value: TicketTipo; label: string; desc: string; Icon: React.ElementType }[] = [
   {
     value: 'domanda',
-    label: 'Domanda legale',
-    desc:  'Hai un quesito legale specifico e vuoi un parere professionale.',
+    label: 'Question',
+    desc:  'You have a specific question and need a professional opinion.',
     Icon:  MessageSquare,
   },
   {
     value: 'revisione_documento',
-    label: 'Revisione documento',
-    desc:  'Vuoi che un professionista esamini un contratto o un atto.',
+    label: 'Document review',
+    desc:  'You want a specialist to review a contract or document.',
     Icon:  FileSearch,
   },
 ];
 
 const PRIORITA_OPTIONS: { value: TicketPriorita; label: string; desc: string; color: string }[] = [
-  { value: 'bassa',   label: 'Bassa',   desc: 'Nessuna urgenza',        color: 'border-gray-200 hover:border-gray-300 text-gray-600' },
-  { value: 'normale', label: 'Normale', desc: 'Risposta entro 24 ore',  color: 'border-blue-200 text-blue-700 bg-blue-50' },
-  { value: 'urgente', label: 'Urgente', desc: 'Risposta prioritaria',   color: 'border-rose-300 text-rose-700 bg-rose-50' },
+  { value: 'bassa',   label: 'Low',    desc: 'No urgency',            color: 'border-gray-200 hover:border-gray-300 text-gray-600' },
+  { value: 'normale', label: 'Normal', desc: 'Response within 24h',   color: 'border-blue-200 text-blue-700 bg-blue-50' },
+  { value: 'urgente', label: 'Urgent', desc: 'Priority response',     color: 'border-rose-300 text-rose-700 bg-rose-50' },
 ];
 
 export default function NuovoTicketPage() {
@@ -61,9 +61,9 @@ export default function NuovoTicketPage() {
     setError('');
     setRateLimitInfo(null);
 
-    if (!areaLegale) { setError('Seleziona l\'area legale.'); return; }
-    if (!titolo.trim()) { setError('Inserisci un titolo per il ticket.'); return; }
-    if (descrizione.trim().length < 30) { setError('La descrizione deve essere di almeno 30 caratteri.'); return; }
+    if (!areaLegale) { setError('Please select a service area.'); return; }
+    if (!titolo.trim()) { setError('Please enter a title for the ticket.'); return; }
+    if (descrizione.trim().length < 30) { setError('Description must be at least 30 characters.'); return; }
 
     setSubmitting(true);
     try {
@@ -82,7 +82,7 @@ export default function NuovoTicketPage() {
       }
 
       if (!res.ok) {
-        setError(data.error ?? 'Si è verificato un errore. Riprova.');
+        setError(data.error ?? 'An error occurred. Please try again.');
         setSubmitting(false);
         return;
       }
@@ -90,7 +90,7 @@ export default function NuovoTicketPage() {
       // Successo → torna alla dashboard
       router.push('/dashboard');
     } catch {
-      setError('Errore di rete. Controlla la connessione e riprova.');
+      setError('Network error. Check your connection and try again.');
       setSubmitting(false);
     }
   };
@@ -114,7 +114,7 @@ export default function NuovoTicketPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Scale className="w-4 h-4 text-violet-600" strokeWidth={2} />
-            <span className="font-semibold text-gray-800 text-sm">Nuovo Ticket</span>
+            <span className="font-semibold text-gray-800 text-sm">New Ticket</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             {user && (
@@ -137,12 +137,12 @@ export default function NuovoTicketPage() {
                 <p className="text-sm font-semibold text-amber-800">{rateLimitInfo.error}</p>
                 <p className="text-sm text-amber-700 mt-1">{rateLimitInfo.detail}</p>
                 <p className="text-xs text-amber-600 mt-2">
-                  Limite: {rateLimitInfo.limit} ticket/24h &bull; Usati: {rateLimitInfo.current} &bull;
-                  Reset: {new Date(rateLimitInfo.resetsAt).toLocaleString('it-IT')}
+                  Limit: {rateLimitInfo.limit} tickets/24h &bull; Used: {rateLimitInfo.current} &bull;
+                  Resets: {new Date(rateLimitInfo.resetsAt).toLocaleString('en-GB')}
                 </p>
                 <Link href="/profilo"
                   className="inline-block mt-3 text-xs font-semibold text-violet-600 hover:text-violet-700 underline">
-                  Aggiorna il piano per aumentare il limite →
+                  Upgrade your plan to increase the limit →
                 </Link>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function NuovoTicketPage() {
 
           {/* 1. Tipo di richiesta */}
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Tipo di richiesta</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Request type</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {TIPO_OPTIONS.map(({ value, label, desc, Icon }) => (
                 <button
@@ -180,37 +180,41 @@ export default function NuovoTicketPage() {
 
           {/* 2. Area legale + Titolo + Priorità */}
           <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700">Dettagli</h2>
+            <h2 className="text-sm font-semibold text-gray-700">Details</h2>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Area legale *</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Service area *</label>
               <select
                 value={areaLegale}
                 onChange={(e) => setAreaLegale(e.target.value)}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50"
               >
-                <option value="">Seleziona l'area legale pertinente…</option>
-                {AREE_LEGALI.map((a) => <option key={a} value={a}>{a}</option>)}
+                <option value="">Select the relevant service area…</option>
+                {Object.entries(SERVICE_AREAS).map(([group, areas]) => (
+                  <optgroup key={group} label={group}>
+                    {(areas as readonly string[]).map((a) => <option key={a} value={a}>{a}</option>)}
+                  </optgroup>
+                ))}
               </select>
               <p className="text-xs text-gray-400 mt-1">
-                L'area determina quale professionista specializzato verrà assegnato automaticamente.
+                The area determines which specialized consultant will be automatically assigned.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Titolo della richiesta *</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Request title *</label>
               <input
                 type="text"
                 value={titolo}
                 onChange={(e) => setTitolo(e.target.value.slice(0, 100))}
-                placeholder="es. Licenziamento senza giusta causa, Revisione contratto NDA…"
+                placeholder="e.g. Wrongful termination, NDA contract review…"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50"
               />
               <p className="text-right text-xs text-gray-400 mt-1">{titolo.length}/100</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Priorità</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Priority</label>
               <div className="grid grid-cols-3 gap-2">
                 {PRIORITA_OPTIONS.map(({ value, label, desc, color }) => (
                   <button
@@ -232,19 +236,19 @@ export default function NuovoTicketPage() {
           {/* 3. Descrizione */}
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">
-              {tipo === 'domanda' ? 'Descrivi il tuo quesito' : 'Descrivi il documento da revisionare'}
+              {tipo === 'domanda' ? 'Describe your question' : 'Describe the document to review'}
             </h2>
             <textarea
               value={descrizione}
               onChange={(e) => setDescr(e.target.value.slice(0, 3000))}
               placeholder={tipo === 'domanda'
-                ? 'Descrivi la situazione con più dettagli possibile: cosa è successo, da quanto tempo, cosa hai già fatto...'
-                : 'Descrivi il documento, le clausole che ti preoccupano, cosa vuoi verificare o modificare...'}
+                ? 'Describe the situation in as much detail as possible: what happened, since when, what you have already done...'
+                : 'Describe the document, the clauses that concern you, what you want to verify or modify...'}
               rows={8}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50 resize-none"
             />
             <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-gray-400">Minimo 30 caratteri</p>
+              <p className="text-xs text-gray-400">Minimum 30 characters</p>
               <p className={`text-xs ${descrizione.length < 30 ? 'text-rose-400' : 'text-gray-400'}`}>
                 {descrizione.length}/3000
               </p>
@@ -253,7 +257,7 @@ export default function NuovoTicketPage() {
             {tipo === 'revisione_documento' && (
               <div className="mt-3 p-3 bg-blue-50 rounded-xl">
                 <p className="text-xs text-blue-600 font-medium">
-                  Puoi allegare il documento dalla dashboard dopo aver creato il ticket.
+                  You can attach the document from the dashboard after creating the ticket.
                 </p>
               </div>
             )}
@@ -264,10 +268,10 @@ export default function NuovoTicketPage() {
             <div className="bg-violet-50 rounded-2xl p-4 flex items-start gap-3">
               <Scale className="w-5 h-5 text-violet-600 shrink-0 mt-0.5" strokeWidth={2} />
               <div>
-                <p className="text-sm font-semibold text-violet-800">Assegnazione automatica</p>
+                <p className="text-sm font-semibold text-violet-800">Automatic assignment</p>
                 <p className="text-xs text-violet-600 mt-0.5">
-                  Il sistema selezionerà automaticamente il professionista specializzato in{' '}
-                  <strong>{areaLegale}</strong> con il minor numero di ticket aperti.
+                  The system will automatically select the specialist in{' '}
+                  <strong>{areaLegale}</strong> with the fewest open tickets.
                 </p>
               </div>
             </div>
@@ -288,14 +292,14 @@ export default function NuovoTicketPage() {
             className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-violet-800 text-white font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {submitting ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Invio in corso…</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
             ) : (
-              <>Invia richiesta <ArrowRight className="w-4 h-4" strokeWidth={2.5} /></>
+              <>Submit request <ArrowRight className="w-4 h-4" strokeWidth={2.5} /></>
             )}
           </button>
 
           <p className="text-xs text-center text-gray-400 pb-4">
-            Dopo l&apos;invio riceverai la risposta entro 24 ore. Potrai caricare documenti direttamente dal ticket.
+            After submitting you will receive a response within 24 hours. You can upload documents directly from the ticket.
           </p>
         </form>
       </div>

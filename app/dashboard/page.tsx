@@ -43,15 +43,15 @@ function StatoBadge({ stato }: { stato: string }) {
 type FiltroStato = 'tutti' | 'aperto' | 'in_lavorazione' | 'richiede_info' | 'risolto';
 
 const FILTRI: { key: FiltroStato; label: string }[] = [
-  { key: 'tutti',         label: 'Tutti'         },
-  { key: 'aperto',        label: 'Aperti'        },
-  { key: 'in_lavorazione',label: 'In lavorazione'},
-  { key: 'richiede_info', label: 'Richiede info' },
-  { key: 'risolto',       label: 'Risolti'       },
+  { key: 'tutti',         label: 'All'           },
+  { key: 'aperto',        label: 'Open'          },
+  { key: 'in_lavorazione',label: 'In progress'   },
+  { key: 'richiede_info', label: 'Needs info'    },
+  { key: 'risolto',       label: 'Resolved'      },
 ];
 
 function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function filename(path: string) {
@@ -142,7 +142,7 @@ export default function DashboardPage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selected || !user) return;
-    if (file.size > 10 * 1024 * 1024) { setUploadErr('File troppo grande (max 10 MB)'); return; }
+    if (file.size > 10 * 1024 * 1024) { setUploadErr('File too large (max 10 MB)'); return; }
     setUploading(true);
     setUploadErr('');
     try {
@@ -152,7 +152,7 @@ export default function DashboardPage() {
       const refreshed = updated.find((t) => t.id === selected.id) ?? selected;
       setSelected(refreshed);
     } catch (err) {
-      setUploadErr('Errore durante il caricamento. Riprova.');
+      setUploadErr('Upload failed. Please try again.');
       console.error(err);
     } finally {
       setUploading(false);
@@ -189,24 +189,24 @@ export default function DashboardPage() {
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-lg font-bold text-gray-800">I miei Ticket</h1>
+              <h1 className="text-lg font-bold text-gray-800">My Tickets</h1>
               <p className="text-xs text-gray-400 mt-0.5">
-                {stats.totale} {stats.totale === 1 ? 'richiesta' : 'richieste'} totali
+                {stats.totale} {stats.totale === 1 ? 'request' : 'requests'} total
               </p>
             </div>
             <Link href="/ticket/nuovo"
               className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold transition-colors">
               <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-              Nuovo
+              New
             </Link>
           </div>
 
           {/* Statistiche rapide */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
-              { label: 'Aperti',         count: stats.aperti,         color: 'text-blue-600' },
-              { label: 'In lavorazione', count: stats.in_lavorazione, color: 'text-amber-600' },
-              { label: 'Risolti',        count: stats.risolti,        color: 'text-emerald-600' },
+              { label: 'Open',        count: stats.aperti,         color: 'text-blue-600' },
+              { label: 'In progress', count: stats.in_lavorazione, color: 'text-amber-600' },
+              { label: 'Resolved',    count: stats.risolti,        color: 'text-emerald-600' },
             ].map(({ label, count, color }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-2.5 text-center">
                 <p className={`text-lg font-bold ${color}`}>{count}</p>
@@ -237,12 +237,12 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center h-full px-6 text-center">
               <Scale className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.5} />
               <p className="text-sm font-medium text-gray-500">
-                {filtro === 'tutti' ? 'Nessun ticket ancora' : `Nessun ticket "${STATO_LABEL[filtro] ?? filtro}"`}
+                {filtro === 'tutti' ? 'No tickets yet' : `No "${STATO_LABEL[filtro] ?? filtro}" tickets`}
               </p>
               {filtro === 'tutti' && (
                 <Link href="/ticket/nuovo"
                   className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors">
-                  Apri il primo ticket
+                  Open your first ticket
                 </Link>
               )}
             </div>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                         <span className="text-xs text-gray-400">{t.areaLegale}</span>
                         {t.priorita === 'urgente' && (
                           <span className="text-xs font-semibold text-rose-600 flex items-center gap-0.5">
-                            <AlertCircle className="w-3 h-3" strokeWidth={2.5} /> Urgente
+                            <AlertCircle className="w-3 h-3" strokeWidth={2.5} /> Urgent
                           </span>
                         )}
                       </div>
@@ -289,14 +289,14 @@ export default function DashboardPage() {
             <div className="w-20 h-20 rounded-3xl bg-violet-100 flex items-center justify-center mb-4">
               <FileText className="w-9 h-9 text-violet-400" strokeWidth={1.5} />
             </div>
-            <h2 className="text-lg font-bold text-gray-700 mb-2">Seleziona un ticket</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-2">Select a ticket</h2>
             <p className="text-sm text-gray-400 max-w-xs mb-6">
-              Scegli un ticket dalla lista per vedere i dettagli, la risposta del professionista e i documenti allegati.
+              Choose a ticket from the list to see the details, consultant response, and attached documents.
             </p>
             <Link href="/ticket/nuovo"
               className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors">
               <Plus className="w-4 h-4" strokeWidth={2.5} />
-              Apri nuovo ticket
+              Open new ticket
             </Link>
           </div>
         ) : (
@@ -307,7 +307,7 @@ export default function DashboardPage() {
               onClick={() => setSelected(null)}
               className="lg:hidden flex items-center gap-1.5 text-sm text-violet-600 font-medium mb-4 hover:underline"
             >
-              ← I miei ticket
+              ← My tickets
             </button>
 
             {/* Header ticket */}
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-bold text-gray-800 leading-snug">{selected.titolo}</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Aperto il {formatDate(selected.createdAt)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Opened on {formatDate(selected.createdAt)}</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -342,13 +342,13 @@ export default function DashboardPage() {
 
             {/* Descrizione richiesta */}
             <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">La tua richiesta</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Your request</h3>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{selected.descrizione}</p>
             </div>
 
             {/* Professionista assegnato */}
             <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Professionista assegnato</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Assigned consultant</h3>
               {professionista ? (
                 <div className="flex items-center gap-3">
                   <Avatar user={professionista} className="w-11 h-11" textClassName="text-sm font-bold" />
@@ -370,8 +370,8 @@ export default function DashboardPage() {
                     <Scale className="w-5 h-5" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 font-medium">Assegnazione in corso…</p>
-                    <p className="text-xs text-gray-400">Un professionista prenderà in carico il tuo ticket a breve</p>
+                    <p className="text-sm text-gray-500 font-medium">Assignment in progress…</p>
+                    <p className="text-xs text-gray-400">A consultant will take charge of your ticket shortly</p>
                   </div>
                 </div>
               )}
@@ -379,7 +379,7 @@ export default function DashboardPage() {
 
             {/* Risposta del professionista */}
             <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Risposta del professionista</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Consultant response</h3>
               {selected.rispostaProfessionista ? (
                 <div className="bg-violet-50 rounded-xl p-4 border border-violet-100">
                   <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
@@ -396,8 +396,8 @@ export default function DashboardPage() {
                   <Clock className="w-5 h-5 shrink-0" strokeWidth={1.5} />
                   <p className="text-sm">
                     {selected.stato === 'risolto'
-                      ? 'Nessuna risposta scritta allegata.'
-                      : 'In attesa di risposta. Il professionista ti risponderà entro 24 ore.'}
+                      ? 'No written response attached.'
+                      : 'Awaiting response. The consultant will reply within 24 hours.'}
                   </p>
                 </div>
               )}
@@ -407,7 +407,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Documenti allegati ({selected.allegati.length})
+                  Attached documents ({selected.allegati.length})
                 </h3>
                 {selected.stato !== 'risolto' && (
                   <button
@@ -416,8 +416,8 @@ export default function DashboardPage() {
                     className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 disabled:opacity-50 transition-colors"
                   >
                     {uploading
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Caricamento…</>
-                      : <><Upload className="w-3.5 h-3.5" strokeWidth={2.5} /> Carica documento</>}
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading…</>
+                      : <><Upload className="w-3.5 h-3.5" strokeWidth={2.5} /> Upload document</>}
                   </button>
                 )}
                 <input
@@ -444,8 +444,8 @@ export default function DashboardPage() {
                   className="w-full border-2 border-dashed border-gray-200 rounded-xl py-6 text-sm text-gray-400 hover:border-violet-300 hover:text-violet-500 transition-colors flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-default"
                 >
                   <Paperclip className="w-6 h-6" strokeWidth={1.5} />
-                  Clicca per caricare un documento
-                  <span className="text-xs">PDF, Word, immagini — max 10 MB</span>
+                  Click to upload a document
+                  <span className="text-xs">PDF, Word, images — max 10 MB</span>
                 </button>
               ) : (
                 <ul className="space-y-2">
@@ -462,10 +462,10 @@ export default function DashboardPage() {
                           className="flex items-center gap-1 text-xs text-violet-600 font-medium hover:text-violet-700 shrink-0"
                         >
                           <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Scarica
+                          Download
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-300">Caricamento URL…</span>
+                        <span className="text-xs text-gray-300">Loading URL…</span>
                       )}
                     </li>
                   ))}

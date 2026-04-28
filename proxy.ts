@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_ROUTES = ['/', '/setup'];
+const PUBLIC_ROUTES = ['/', '/setup', '/piani'];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
 
   if (user && path === '/')
-    return NextResponse.redirect(new URL('/aiuta', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
 
   return response;
 }

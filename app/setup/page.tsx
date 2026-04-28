@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Building2, User, Scale } from 'lucide-react';
+import { ArrowRight, Building2, User, Scale, Check, Video, FileText, MessageSquare, Clock, Shield } from 'lucide-react';
 import { getCurrentUser, updateProfilo, uploadAvatar } from '../_lib/db';
+import { CONSULTANT_TYPES, ALL_SERVICE_AREAS } from '../_lib/constants';
 import type { Profilo, TipoCliente, SubscriptionTier } from '../_lib/types';
 import Avatar from '../_components/Avatar';
 
@@ -24,7 +25,7 @@ export default function SetupPage() {
   const [ragioneSociale, setRagioneSociale] = useState('');
   const [partitaIva, setPartitaIva]     = useState('');
   const [codiceFiscale, setCodiceFiscale] = useState('');
-  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('basic');
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('pro');
 
   // Campi professionista
   const [qualifica, setQualifica]             = useState('');
@@ -120,15 +121,15 @@ export default function SetupPage() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
               <Scale className="w-5 h-5 text-violet-600" strokeWidth={2} />
-              <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">LegalMatch</span>
+              <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">All In One Consulting</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-800">
-              {isProf ? 'Completa il profilo professionale' : 'Completa il tuo profilo'}
+              {isProf ? 'Complete your consultant profile' : 'Complete your profile'}
             </h1>
             <p className="text-gray-500 text-sm mt-1">
               {isProf
-                ? 'Inserisci le tue credenziali professionali per iniziare a gestire i ticket'
-                : 'Inserisci i dati per iniziare a ricevere consulenza legale'}
+                ? 'Enter your professional credentials to start managing tickets'
+                : 'Enter your details to start receiving expert consulting support'}
             </p>
           </div>
 
@@ -152,8 +153,8 @@ export default function SetupPage() {
                   <input type="file" accept="image/*" className="sr-only" onChange={handleFotoChange} />
                 </label>
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Foto profilo</p>
-                  <p className="text-xs text-gray-400">{foto ? 'Clicca per cambiare' : 'Opzionale'}</p>
+                  <p className="text-sm font-medium text-gray-700">Profile photo</p>
+                  <p className="text-xs text-gray-400">{foto ? 'Click to change' : 'Optional'}</p>
                 </div>
               </div>
 
@@ -161,11 +162,11 @@ export default function SetupPage() {
               {!isProf && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Tipo di cliente</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Client type</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { value: 'privato' as TipoCliente, label: 'Persona fisica', Icon: User },
-                        { value: 'azienda' as TipoCliente, label: 'Azienda / Studio', Icon: Building2 },
+                        { value: 'privato' as TipoCliente, label: 'Individual', Icon: User },
+                        { value: 'azienda' as TipoCliente, label: 'Company / Firm', Icon: Building2 },
                       ].map(({ value, label, Icon }) => (
                         <button key={value} type="button" onClick={() => setTipoCliente(value)}
                           className={`flex items-center gap-2 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
@@ -184,17 +185,17 @@ export default function SetupPage() {
                   {tipoCliente === 'azienda' && (
                     <>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Ragione Sociale *</label>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Company name *</label>
                         <input type="text" value={ragioneSociale} onChange={(e) => setRagioneSociale(e.target.value)}
-                          placeholder="es. Acme Srl"
+                          placeholder="e.g. Acme Ltd"
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                          Partita IVA <span className="font-normal text-gray-400">(opzionale)</span>
+                          VAT number <span className="font-normal text-gray-400">(optional)</span>
                         </label>
                         <input type="text" value={partitaIva} onChange={(e) => setPartitaIva(e.target.value)}
-                          placeholder="12345678901"
+                          placeholder="IT12345678901"
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
                       </div>
                     </>
@@ -203,7 +204,7 @@ export default function SetupPage() {
                   {tipoCliente === 'privato' && (
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Codice Fiscale <span className="font-normal text-gray-400">(opzionale)</span>
+                        Tax code <span className="font-normal text-gray-400">(optional)</span>
                       </label>
                       <input type="text" value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)}
                         placeholder="RSSMRA80A01H501Z"
@@ -212,24 +213,104 @@ export default function SetupPage() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Piano di abbonamento</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { value: 'basic'   as SubscriptionTier, label: 'Basic',   sub: '1 ticket / giorno' },
-                        { value: 'premium' as SubscriptionTier, label: 'Premium', sub: '5 ticket / giorno' },
-                      ].map(({ value, label, sub }) => (
-                        <button key={value} type="button" onClick={() => setSubscriptionTier(value)}
-                          className={`py-3 px-4 rounded-xl border-2 text-sm transition-all text-left ${
-                            subscriptionTier === value
-                              ? 'border-violet-600 bg-violet-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <p className={`font-semibold ${subscriptionTier === value ? 'text-violet-700' : 'text-gray-700'}`}>{label}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
-                        </button>
-                      ))}
+                    <label className="block text-xs font-semibold text-gray-600 mb-3">Subscription plan</label>
+                    <div className="space-y-3">
+                      {([
+                        {
+                          value: 'pro' as SubscriptionTier,
+                          label: 'Pro',
+                          price: '€999/year',
+                          tagline: 'Freelancers & small businesses',
+                          accent: 'border-violet-400 bg-violet-50',
+                          accentText: 'text-violet-700',
+                          badge: null,
+                          features: [
+                            { Icon: Shield,        text: 'Generalist consulting team' },
+                            { Icon: Clock,         text: 'Response within 24 hours' },
+                            { Icon: MessageSquare, text: 'Async chat + FAQ' },
+                            { Icon: Video,         text: 'Video call up to 30 min/session' },
+                            { Icon: FileText,      text: 'Document review up to 50 pages/month' },
+                            { Icon: Shield,        text: 'Legal Vault — Template Archive' },
+                          ],
+                        },
+                        {
+                          value: 'max' as SubscriptionTier,
+                          label: 'Max',
+                          price: '€1,499/year',
+                          tagline: 'Growing companies',
+                          accent: 'border-amber-400 bg-amber-50',
+                          accentText: 'text-amber-700',
+                          badge: 'Most popular',
+                          features: [
+                            { Icon: Shield,        text: 'Specialist consulting team' },
+                            { Icon: Clock,         text: 'Response within 12 hours' },
+                            { Icon: MessageSquare, text: 'Async chat support' },
+                            { Icon: Video,         text: 'Video call up to 1 hour/session' },
+                            { Icon: FileText,      text: 'Document review up to 100 pages/month' },
+                            { Icon: Shield,        text: 'Legal Vault — Template Archive' },
+                          ],
+                        },
+                        {
+                          value: 'enterprise' as SubscriptionTier,
+                          label: 'Enterprise',
+                          price: '€2,999/year',
+                          tagline: 'Large organisations',
+                          accent: 'border-purple-400 bg-purple-50',
+                          accentText: 'text-purple-700',
+                          badge: 'Full access',
+                          features: [
+                            { Icon: Shield,        text: '360° dedicated consultant team' },
+                            { Icon: Clock,         text: 'Response within 3 hours' },
+                            { Icon: MessageSquare, text: 'Async chat support' },
+                            { Icon: Video,         text: 'Video call up to 2 hours/session' },
+                            { Icon: FileText,      text: 'Document review up to 300 pages/month' },
+                            { Icon: Shield,        text: 'Legal Vault — Template Archive' },
+                          ],
+                        },
+                      ] as const).map(({ value, label, price, tagline, accent, accentText, badge, features }) => {
+                        const selected = subscriptionTier === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setSubscriptionTier(value)}
+                            className={`w-full text-left rounded-xl border-2 transition-all overflow-hidden ${
+                              selected ? accent : 'border-gray-200 bg-white hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                  selected ? `${accentText} border-current` : 'border-gray-300'
+                                }`}>
+                                  {selected && <div className="w-2 h-2 rounded-full bg-current" />}
+                                </div>
+                                <span className={`font-bold text-sm ${selected ? accentText : 'text-gray-700'}`}>{label}</span>
+                                {badge && (
+                                  <span className="text-xs font-semibold bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full">{badge}</span>
+                                )}
+                              </div>
+                              <span className={`text-sm font-bold ${selected ? accentText : 'text-gray-500'}`}>{price}</span>
+                            </div>
+                            <p className="text-xs text-gray-400 px-4 pb-2">{tagline}</p>
+                            {selected && (
+                              <ul className="px-4 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-4 border-t border-current/10 pt-2.5">
+                                {features.map(({ Icon, text }) => (
+                                  <li key={text} className="flex items-center gap-1.5 text-xs text-gray-600">
+                                    <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" strokeWidth={2.5} />
+                                    {text}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
+                    <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                      <Shield className="w-3 h-3 text-violet-400" strokeWidth={2} />
+                      All plans include Legal Vault — a library of pre-approved templates (NDA, T&Cs, Cookie Policy, and more).
+                    </p>
                   </div>
                 </>
               )}
@@ -238,34 +319,28 @@ export default function SetupPage() {
               {isProf && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Qualifica *</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Consultant type *</label>
                     <select value={qualifica} onChange={(e) => setQualifica(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50">
-                      <option value="">Seleziona qualifica</option>
-                      <option>Avvocato</option>
-                      <option>Notaio</option>
-                      <option>Commercialista</option>
-                      <option>Consulente del Lavoro</option>
+                      <option value="">Select your type</option>
+                      {CONSULTANT_TYPES.map((t) => <option key={t}>{t}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Ordine professionale *</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Professional register *</label>
                     <input type="text" value={ordineProfessionale} onChange={(e) => setOrdine(e.target.value)}
-                      placeholder="es. Ordine degli Avvocati di Milano"
+                      placeholder="e.g. Bar Association of Milan"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Aree legali di competenza *</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Areas of expertise *</label>
                     <div className="flex gap-2 mb-2">
                       <select value={areeInput} onChange={(e) => setAreeInput(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50">
-                        <option value="">Seleziona area…</option>
-                        {['Diritto del Lavoro','Diritto Civile','Diritto Commerciale','Diritto Penale',
-                          'Diritto Tributario / Fiscale','Diritto di Famiglia','Diritto Societario',
-                          'Contrattualistica','Privacy / GDPR','Diritto Immobiliare','Proprietà Intellettuale',
-                        ].map((a) => <option key={a}>{a}</option>)}
+                        <option value="">Select area…</option>
+                        {ALL_SERVICE_AREAS.map((a) => <option key={a}>{a}</option>)}
                       </select>
                       <button type="button" onClick={addArea}
                         className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors">
@@ -280,7 +355,7 @@ export default function SetupPage() {
                         </span>
                       ))}
                       {areeLegali.length === 0 && (
-                        <p className="text-xs text-gray-400">Nessuna area aggiunta</p>
+                        <p className="text-xs text-gray-400">No areas added yet</p>
                       )}
                     </div>
                   </div>
@@ -290,12 +365,12 @@ export default function SetupPage() {
               {/* ── CAMPI COMUNI ─────────────────────────────────────────── */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  Biografia <span className="font-normal text-gray-400">(opzionale)</span>
+                  Bio <span className="font-normal text-gray-400">(optional)</span>
                 </label>
                 <textarea value={biografia} onChange={(e) => setBiografia(e.target.value.slice(0, 400))}
                   placeholder={isProf
-                    ? "Descrivi la tua esperienza professionale…"
-                    : "Descrivi brevemente la tua situazione o il tipo di assistenza che cerchi…"}
+                    ? "Describe your professional background and experience…"
+                    : "Briefly describe your business and the type of support you need…"}
                   rows={3}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50 resize-none" />
                 <p className="text-right text-xs text-gray-400 mt-1">{biografia.length}/400</p>
@@ -303,10 +378,10 @@ export default function SetupPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  LinkedIn <span className="font-normal text-gray-400">(opzionale)</span>
+                  LinkedIn <span className="font-normal text-gray-400">(optional)</span>
                 </label>
                 <input type="url" value={linkedin} onChange={(e) => setLinkedin(e.target.value)}
-                  placeholder="https://linkedin.com/in/tuoprofilo"
+                  placeholder="https://linkedin.com/in/yourprofile"
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
               </div>
 
@@ -315,7 +390,7 @@ export default function SetupPage() {
               <button type="submit" disabled={submitting}
                 className="w-full py-3 bg-gradient-to-r from-violet-600 to-violet-800 text-white font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {submitting ? 'Salvataggio…' : 'Inizia →'}
+                {submitting ? 'Saving…' : 'Get started →'}
                 {!submitting && <ArrowRight className="w-4 h-4" strokeWidth={2.5} />}
               </button>
             </form>
@@ -324,7 +399,7 @@ export default function SetupPage() {
 
         {/* RIGHT — preview */}
         <div className="hidden lg:block">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Anteprima profilo</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Profile preview</p>
           <div className="bg-white rounded-3xl shadow-sm overflow-hidden sticky top-8">
             <div className="bg-gradient-to-br from-violet-50 to-violet-100 flex flex-col items-center py-8 px-4">
               <Avatar user={previewUser} className="w-20 h-20 shadow-lg" textClassName="text-2xl font-bold" />
@@ -337,7 +412,7 @@ export default function SetupPage() {
                 <span className={`mt-2 text-xs px-3 py-1 rounded-full font-medium ${
                   tipoCliente === 'azienda' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                  {tipoCliente === 'azienda' ? '🏢 Azienda' : '👤 Privato'}
+                  {tipoCliente === 'azienda' ? '🏢 Company' : '👤 Individual'}
                 </span>
               )}
             </div>
@@ -345,19 +420,21 @@ export default function SetupPage() {
             <div className="px-5 py-4 space-y-3 text-sm">
               {!isProf && subscriptionTier && (
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-500 text-xs">Piano</span>
+                  <span className="text-gray-500 text-xs">Plan</span>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    subscriptionTier === 'premium'
+                    subscriptionTier === 'enterprise'
+                      ? 'bg-purple-100 text-purple-700'
+                      : subscriptionTier === 'max'
                       ? 'bg-amber-100 text-amber-700'
                       : 'bg-gray-100 text-gray-600'
                   }`}>
-                    {subscriptionTier === 'premium' ? '⭐ Premium' : 'Basic'}
+                    {subscriptionTier === 'enterprise' ? '🏆 Enterprise' : subscriptionTier === 'max' ? '⭐ Max' : 'Pro'}
                   </span>
                 </div>
               )}
               {isProf && areeLegali.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Competenze</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Expertise</p>
                   <div className="flex flex-wrap gap-1.5">
                     {areeLegali.map((a) => (
                       <span key={a} className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full">{a}</span>
@@ -369,7 +446,7 @@ export default function SetupPage() {
                 <p className="text-xs text-gray-500 leading-relaxed pt-1">{biografia}</p>
               )}
               {!isProf && !areeLegali.length && !biografia && (
-                <p className="text-xs text-gray-400 text-center py-2">Compila il form per vedere l&apos;anteprima</p>
+                <p className="text-xs text-gray-400 text-center py-2">Fill in the form to see the preview</p>
               )}
             </div>
           </div>

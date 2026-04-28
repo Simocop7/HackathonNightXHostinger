@@ -5,6 +5,7 @@ import {
   Scale, LogOut, Star, Building2, User, Link2, Shield,
   Loader2, ChevronRight, CheckCircle2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { getCurrentUser, updateProfilo, uploadAvatar, clearCurrentUser } from '../_lib/db';
 import type { Profilo } from '../_lib/types';
 import Avatar from '../_components/Avatar';
@@ -108,10 +109,12 @@ export default function ProfiloPage() {
                   )}
                   {!isProf && user.subscriptionTier && (
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 ${
-                      user.subscriptionTier === 'premium' ? 'bg-amber-400/30 text-amber-100' : 'bg-white/10 text-violet-200'
+                      user.subscriptionTier === 'enterprise' ? 'bg-purple-400/30 text-purple-100'
+                      : user.subscriptionTier === 'max' ? 'bg-amber-400/30 text-amber-100'
+                      : 'bg-white/10 text-violet-200'
                     }`}>
                       <Star className="w-3 h-3" strokeWidth={2} />
-                      {user.subscriptionTier === 'premium' ? 'Premium' : 'Basic'}
+                      {user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1)}
                     </span>
                   )}
                 </div>
@@ -252,25 +255,33 @@ export default function ProfiloPage() {
           <div className="bg-white rounded-2xl shadow-sm p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-500" strokeWidth={2} />
-              Piano abbonamento
+              Subscription plan
             </h2>
             <div className={`rounded-xl p-4 flex items-center justify-between ${
-              user.subscriptionTier === 'premium'
-                ? 'bg-amber-50 border border-amber-200'
-                : 'bg-gray-50 border border-gray-200'
+              user.subscriptionTier === 'enterprise' ? 'bg-purple-50 border border-purple-200'
+              : user.subscriptionTier === 'max' ? 'bg-amber-50 border border-amber-200'
+              : 'bg-gray-50 border border-gray-200'
             }`}>
               <div>
-                <p className={`font-bold text-sm ${user.subscriptionTier === 'premium' ? 'text-amber-700' : 'text-gray-700'}`}>
-                  {user.subscriptionTier === 'premium' ? '⭐ Piano Premium' : 'Piano Basic'}
+                <p className={`font-bold text-sm ${
+                  user.subscriptionTier === 'enterprise' ? 'text-purple-700'
+                  : user.subscriptionTier === 'max' ? 'text-amber-700'
+                  : 'text-gray-700'
+                }`}>
+                  {user.subscriptionTier === 'enterprise' ? '⭐ Enterprise Plan'
+                    : user.subscriptionTier === 'max' ? '⭐ Max Plan'
+                    : 'Pro Plan'}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {user.subscriptionTier === 'premium' ? '5 ticket ogni 24 ore' : '1 ticket ogni 24 ore'}
+                  {user.subscriptionTier === 'enterprise' ? '50 tickets per 24h'
+                    : user.subscriptionTier === 'max' ? '10 tickets per 24h'
+                    : '3 tickets per 24h'}
                 </p>
               </div>
-              {user.subscriptionTier !== 'premium' && (
-                <button className="text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline transition-colors">
-                  Passa a Premium →
-                </button>
+              {user.subscriptionTier !== 'enterprise' && (
+                <Link href="/piani" className="text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline transition-colors">
+                  Upgrade plan →
+                </Link>
               )}
             </div>
           </div>

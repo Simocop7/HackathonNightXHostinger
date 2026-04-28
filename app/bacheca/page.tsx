@@ -16,8 +16,6 @@ import { STATO_LABEL, PRIORITA_LABEL, TIPO_LABEL } from '../_lib/constants';
 import type { Profilo, Ticket, Assegnazione, TicketStato } from '../_lib/types';
 import Avatar from '../_components/Avatar';
 
-// ── Badge + helpers ───────────────────────────────────────────────────────────
-
 const STATO_STYLE: Record<string, { bg: string; text: string; dot: string; Icon: React.ElementType }> = {
   aperto:         { bg: 'bg-blue-100',    text: 'text-blue-700',    dot: 'bg-blue-500',    Icon: Clock        },
   in_lavorazione: { bg: 'bg-amber-100',   text: 'text-amber-700',   dot: 'bg-amber-500',   Icon: FileText     },
@@ -44,22 +42,20 @@ function StatoBadge({ stato }: { stato: string }) {
 type FiltroStato = 'tutti' | 'aperto' | 'in_lavorazione' | 'richiede_info' | 'risolto';
 
 const FILTRI: { key: FiltroStato; label: string }[] = [
-  { key: 'tutti',          label: 'Tutti'          },
-  { key: 'aperto',         label: 'Aperti'         },
-  { key: 'in_lavorazione', label: 'In lavorazione' },
-  { key: 'richiede_info',  label: 'Richiede info'  },
-  { key: 'risolto',        label: 'Risolti'        },
+  { key: 'tutti',          label: 'All'         },
+  { key: 'aperto',         label: 'Open'        },
+  { key: 'in_lavorazione', label: 'In progress' },
+  { key: 'richiede_info',  label: 'Needs info'  },
+  { key: 'risolto',        label: 'Resolved'    },
 ];
 
 function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function filename(path: string) {
   return path.split('/').pop() ?? path;
 }
-
-// ── Componente principale ─────────────────────────────────────────────────────
 
 export default function BachecaPage() {
   const router = useRouter();
@@ -118,7 +114,6 @@ export default function BachecaPage() {
     });
   }, [selected?.id]);
 
-  // Carica dati del ticket selezionato
   useEffect(() => {
     if (!selected) {
       setAssegnazione(null); setCliente(null); setSignedUrls({});
@@ -138,21 +133,18 @@ export default function BachecaPage() {
     })();
   }, [selected?.id]);
 
-  // Genera signed URL per ogni allegato
   useEffect(() => {
     if (!selected?.allegati.length) { setSignedUrls({}); return; }
     (async () => {
       const map: Record<string, string> = {};
       await Promise.all(
         selected.allegati.map(async (path) => {
-          try { map[path] = await getSignedUrl(path); } catch { /* ignora */ }
+          try { map[path] = await getSignedUrl(path); } catch { /* ignore */ }
         }),
       );
       setSignedUrls(map);
     })();
   }, [selected?.allegati]);
-
-  // ── Actions ──────────────────────────────────────────────────────────────────
 
   const handleSalvaRisposta = async () => {
     if (!selected) return;
@@ -184,7 +176,7 @@ export default function BachecaPage() {
   const handleUploadDoc = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selected || !user) return;
-    if (file.size > 10 * 1024 * 1024) { setUploadDocErr('File troppo grande (max 10 MB)'); return; }
+    if (file.size > 10 * 1024 * 1024) { setUploadDocErr('File too large (max 10 MB)'); return; }
     setUploadingDoc(true); setUploadDocErr('');
     try {
       await uploadAllegatoProfessionista(selected.id, user.id, file);
@@ -194,7 +186,7 @@ export default function BachecaPage() {
         setTickets((prev) => prev.map((t) => t.id === refreshed.id ? refreshed : t));
       }
     } catch {
-      setUploadDocErr('Errore durante il caricamento. Riprova.');
+      setUploadDocErr('Upload failed. Please try again.');
     } finally {
       setUploadingDoc(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -210,13 +202,11 @@ export default function BachecaPage() {
       setSelected(patch);
       setTickets((prev) => prev.map((t) => t.id === patch.id ? patch : t));
     } catch {
-      setCloseErr('Errore durante la chiusura. Riprova.');
+      setCloseErr('Error closing ticket. Please try again.');
     } finally {
       setClosing(false);
     }
   };
-
-  // ── Derived ──────────────────────────────────────────────────────────────────
 
   const ticketsFiltrati = filtro === 'tutti'
     ? tickets
@@ -242,22 +232,22 @@ export default function BachecaPage() {
   return (
     <div className="page-root-full flex overflow-hidden">
 
-      {/* ── LEFT: coda ticket ───────────────────────────────────── */}
+      {/* LEFT: ticket queue */}
       <aside className={`w-full lg:w-[400px] shrink-0 border-r border-gray-100 bg-white flex flex-col ${selected ? 'hidden lg:flex' : 'flex'}`}>
 
         <div className="px-5 pt-5 pb-3 border-b border-gray-100">
           <div className="mb-4">
-            <h1 className="text-lg font-bold text-gray-800">Coda Ticket</h1>
+            <h1 className="text-lg font-bold text-gray-800">Ticket Board</h1>
             <p className="text-xs text-gray-400 mt-0.5">
-              {tickets.filter((t) => t.stato !== 'risolto').length} attivi
+              {tickets.filter((t) => t.stato !== 'risolto').length} active
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
-              { label: 'Aperti',         count: stats.aperti,         color: 'text-blue-600'    },
-              { label: 'In lavorazione', count: stats.in_lavorazione, color: 'text-amber-600'   },
-              { label: 'Risolti',        count: stats.risolti,        color: 'text-emerald-600' },
+              { label: 'Open',        count: stats.aperti,         color: 'text-blue-600'    },
+              { label: 'In progress', count: stats.in_lavorazione, color: 'text-amber-600'   },
+              { label: 'Resolved',    count: stats.risolti,        color: 'text-emerald-600' },
             ].map(({ label, count, color }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-2.5 text-center">
                 <p className={`text-lg font-bold ${color}`}>{count}</p>
@@ -284,7 +274,7 @@ export default function BachecaPage() {
             <div className="flex flex-col items-center justify-center h-full px-6 text-center">
               <Scale className="w-12 h-12 text-gray-200 mb-3" strokeWidth={1.5} />
               <p className="text-sm font-medium text-gray-500">
-                {filtro === 'tutti' ? 'Nessun ticket assegnato' : `Nessun ticket "${STATO_LABEL[filtro] ?? filtro}"`}
+                {filtro === 'tutti' ? 'No assigned tickets' : `No "${STATO_LABEL[filtro] ?? filtro}" tickets`}
               </p>
             </div>
           ) : (
@@ -308,7 +298,7 @@ export default function BachecaPage() {
                         <span className="text-xs text-gray-400">{t.areaLegale}</span>
                         {t.priorita === 'urgente' && (
                           <span className="text-xs font-semibold text-rose-600 flex items-center gap-0.5">
-                            <AlertCircle className="w-3 h-3" strokeWidth={2.5} /> Urgente
+                            <AlertCircle className="w-3 h-3" strokeWidth={2.5} /> Urgent
                           </span>
                         )}
                       </div>
@@ -322,16 +312,16 @@ export default function BachecaPage() {
         </div>
       </aside>
 
-      {/* ── RIGHT: dettaglio ticket ──────────────────────────────── */}
+      {/* RIGHT: ticket detail */}
       <main className={`flex-1 overflow-y-auto bg-gray-50 ${selected ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'}`}>
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
             <div className="w-20 h-20 rounded-3xl bg-violet-100 flex items-center justify-center mb-4">
               <FileText className="w-9 h-9 text-violet-400" strokeWidth={1.5} />
             </div>
-            <h2 className="text-lg font-bold text-gray-700 mb-2">Seleziona un ticket</h2>
+            <h2 className="text-lg font-bold text-gray-700 mb-2">Select a ticket</h2>
             <p className="text-sm text-gray-400 max-w-xs">
-              Scegli un ticket dalla coda per leggere il quesito, scaricare i documenti e inviare il tuo parere legale.
+              Choose a ticket from the board to read the client request, download documents, and send your response.
             </p>
           </div>
         ) : (
@@ -339,10 +329,10 @@ export default function BachecaPage() {
 
             <button onClick={() => setSelected(null)}
               className="lg:hidden flex items-center gap-1.5 text-sm text-violet-600 font-medium hover:underline">
-              ← Coda ticket
+              ← Ticket Board
             </button>
 
-            {/* 1. Header + gestione stato ───────────────────────── */}
+            {/* 1. Header + status */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-start gap-3 mb-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${STATO_STYLE[selected.stato]?.bg ?? 'bg-gray-100'}`}>
@@ -353,7 +343,7 @@ export default function BachecaPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-bold text-gray-800 leading-snug">{selected.titolo}</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Ricevuto il {formatDate(selected.createdAt)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Received on {formatDate(selected.createdAt)}</p>
                 </div>
               </div>
 
@@ -377,7 +367,7 @@ export default function BachecaPage() {
 
               {selected.stato !== 'risolto' && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Cambia stato</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Change status</p>
                   <div className="flex flex-wrap gap-2">
                     {(['aperto', 'in_lavorazione', 'richiede_info'] as TicketStato[]).map((s) => (
                       <button key={s} onClick={() => handleCambiaStato(s)}
@@ -396,9 +386,9 @@ export default function BachecaPage() {
               )}
             </div>
 
-            {/* 2. Quesito del cliente ───────────────────────────── */}
+            {/* 2. Client request */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Quesito del cliente</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Client request</h3>
 
               {cliente && (
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -409,8 +399,8 @@ export default function BachecaPage() {
                     </p>
                     <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                       {cliente.tipoCliente === 'azienda'
-                        ? <><Building2 className="w-3 h-3" strokeWidth={2} /> {cliente.ragioneSociale ?? 'Azienda'}</>
-                        : <><User className="w-3 h-3" strokeWidth={2} /> Cliente privato</>}
+                        ? <><Building2 className="w-3 h-3" strokeWidth={2} /> {cliente.ragioneSociale ?? 'Company'}</>
+                        : <><User className="w-3 h-3" strokeWidth={2} /> Individual client</>}
                     </p>
                   </div>
                 </div>
@@ -419,15 +409,15 @@ export default function BachecaPage() {
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{selected.descrizione}</p>
             </div>
 
-            {/* 3. Documenti del cliente ────────────────────────── */}
+            {/* 3. Client documents */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                Documenti del cliente ({clienteAllegati.length})
+                Client documents ({clienteAllegati.length})
               </h3>
               {clienteAllegati.length === 0 ? (
                 <div className="flex items-center gap-3 py-2 text-gray-400">
                   <Paperclip className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                  <p className="text-sm">Nessun documento allegato dal cliente.</p>
+                  <p className="text-sm">No documents attached by the client.</p>
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -439,7 +429,7 @@ export default function BachecaPage() {
                         <a href={signedUrls[path]} target="_blank" rel="noopener noreferrer" download
                           className="flex items-center gap-1 text-xs text-violet-600 font-medium hover:text-violet-700 shrink-0">
                           <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Scarica
+                          Download
                         </a>
                       ) : (
                         <Loader2 className="w-3.5 h-3.5 text-gray-300 animate-spin shrink-0" />
@@ -450,15 +440,15 @@ export default function BachecaPage() {
               )}
             </div>
 
-            {/* 4. Parere legale ────────────────────────────────── */}
+            {/* 4. Your response */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Il tuo parere legale</h3>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Your professional response</h3>
                 {selected.rispostaProfessionista && !isEditingRisposta && selected.stato !== 'risolto' && (
                   <button onClick={() => setIsEditingRisposta(true)}
                     className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium">
                     <Edit3 className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    Modifica
+                    Edit
                   </button>
                 )}
               </div>
@@ -469,7 +459,7 @@ export default function BachecaPage() {
                     value={editRisposta}
                     onChange={(e) => setEditRisposta(e.target.value)}
                     rows={8}
-                    placeholder="Scrivi qui il tuo parere legale, le raccomandazioni e le conclusioni…"
+                    placeholder="Write your professional opinion, recommendations, and conclusions here…"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-700 leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50 resize-none"
                   />
                   <div className="flex gap-2">
@@ -477,14 +467,14 @@ export default function BachecaPage() {
                       disabled={savingRisposta || !editRisposta.trim()}
                       className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50">
                       {savingRisposta
-                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvataggio…</>
-                        : <><CheckCircle2 className="w-4 h-4" strokeWidth={2} /> Salva parere</>}
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                        : <><CheckCircle2 className="w-4 h-4" strokeWidth={2} /> Save response</>}
                     </button>
                     {selected.rispostaProfessionista && (
                       <button
                         onClick={() => { setIsEditingRisposta(false); setEditRisposta(selected.rispostaProfessionista ?? ''); }}
                         className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">
-                        Annulla
+                        Cancel
                       </button>
                     )}
                   </div>
@@ -503,23 +493,23 @@ export default function BachecaPage() {
               ) : (
                 <div className="flex items-center gap-3 py-3 text-gray-400">
                   <MessageSquare className="w-5 h-5 shrink-0" strokeWidth={1.5} />
-                  <p className="text-sm">Nessun parere scritto ancora. Usa il form per iniziare.</p>
+                  <p className="text-sm">No response written yet. Use the form to get started.</p>
                 </div>
               )}
             </div>
 
-            {/* 5. Documenti di risposta ─────────────────────────── */}
+            {/* 5. Response documents */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Documenti allegati alla risposta ({profAllegati.length})
+                  Response documents ({profAllegati.length})
                 </h3>
                 {selected.stato !== 'risolto' && (
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploadingDoc}
                     className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 disabled:opacity-50 transition-colors">
                     {uploadingDoc
-                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Caricamento…</>
-                      : <><Upload className="w-3.5 h-3.5" strokeWidth={2.5} /> Allega documento</>}
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading…</>
+                      : <><Upload className="w-3.5 h-3.5" strokeWidth={2.5} /> Attach document</>}
                   </button>
                 )}
                 <input ref={fileInputRef} type="file" className="sr-only"
@@ -540,8 +530,8 @@ export default function BachecaPage() {
                   disabled={uploadingDoc || selected.stato === 'risolto'}
                   className="w-full border-2 border-dashed border-gray-200 rounded-xl py-5 text-sm text-gray-400 hover:border-violet-300 hover:text-violet-500 transition-colors flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-default">
                   <Paperclip className="w-5 h-5" strokeWidth={1.5} />
-                  Allega contratti revisionati o documenti di risposta
-                  <span className="text-xs">PDF, Word, immagini — max 10 MB</span>
+                  Attach reviewed contracts or response documents
+                  <span className="text-xs">PDF, Word, images — max 10 MB</span>
                 </button>
               ) : (
                 <ul className="space-y-2">
@@ -553,7 +543,7 @@ export default function BachecaPage() {
                         <a href={signedUrls[path]} target="_blank" rel="noopener noreferrer" download
                           className="flex items-center gap-1 text-xs text-violet-600 font-medium hover:text-violet-700 shrink-0">
                           <Download className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Scarica
+                          Download
                         </a>
                       ) : (
                         <Loader2 className="w-3.5 h-3.5 text-gray-300 animate-spin shrink-0" />
@@ -564,7 +554,7 @@ export default function BachecaPage() {
               )}
             </div>
 
-            {/* 6. Chiudi ticket ────────────────────────────────── */}
+            {/* 6. Close ticket */}
             {selected.stato !== 'risolto' ? (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100">
                 <div className="flex items-start gap-3">
@@ -572,14 +562,14 @@ export default function BachecaPage() {
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" strokeWidth={2} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-gray-800 mb-1">Chiudi e risolvi il ticket</h3>
+                    <h3 className="text-sm font-bold text-gray-800 mb-1">Close and resolve ticket</h3>
                     <p className="text-xs text-gray-500 mb-3">
-                      Il ticket verrà marcato come risolto e ti verranno accreditati{' '}
-                      <span className="font-semibold text-emerald-700">+50 punti</span>.
+                      The ticket will be marked as resolved and you will earn{' '}
+                      <span className="font-semibold text-emerald-700">+50 points</span>.
                     </p>
                     {!selected.rispostaProfessionista && (
                       <p className="text-xs text-amber-600 font-medium mb-3">
-                        ⚠ Consigliato: salva il parere legale prima di chiudere.
+                        ⚠ Recommended: save your response before closing.
                       </p>
                     )}
                     {closeErr && (
@@ -592,8 +582,8 @@ export default function BachecaPage() {
                       disabled={closing || !assegnazione}
                       className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50">
                       {closing
-                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Chiusura…</>
-                        : <><CheckCircle2 className="w-4 h-4" strokeWidth={2} /> Chiudi e risolvi</>}
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Closing…</>
+                        : <><CheckCircle2 className="w-4 h-4" strokeWidth={2} /> Close & resolve</>}
                     </button>
                   </div>
                 </div>
@@ -602,9 +592,9 @@ export default function BachecaPage() {
               <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-200 flex items-center gap-3">
                 <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" strokeWidth={2} />
                 <div>
-                  <p className="text-sm font-bold text-emerald-700">Ticket risolto</p>
+                  <p className="text-sm font-bold text-emerald-700">Ticket resolved</p>
                   <p className="text-xs text-emerald-600 mt-0.5">
-                    +50 punti accreditati. Ottimo lavoro!
+                    +50 points credited. Great work!
                   </p>
                 </div>
               </div>

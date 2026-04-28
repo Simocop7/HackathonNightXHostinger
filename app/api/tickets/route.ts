@@ -6,10 +6,11 @@ import type { TicketTipo, TicketPriorita, SubscriptionTier } from '../../_lib/ty
 // ── Limiti giornalieri per subscription tier ──────────────────────────────────
 
 const DAILY_LIMITS: Record<SubscriptionTier, number> = {
-  basic:   1,
-  premium: 5,
+  pro:        3,
+  max:        10,
+  enterprise: 50,
 };
-const DEFAULT_LIMIT = 1; // fallback per utenti senza piano assegnato
+const DEFAULT_LIMIT = 1; // fallback for users without a plan
 
 // ── Helper: client Supabase con service role (bypassa RLS) ────────────────────
 
@@ -120,13 +121,13 @@ export async function POST(req: NextRequest) {
   const limit = tier ? (DAILY_LIMITS[tier] ?? DEFAULT_LIMIT) : DEFAULT_LIMIT;
 
   if ((ticketsOggi ?? 0) >= limit) {
-    const tierLabel = tier === 'premium' ? 'Premium' : 'Basic';
+    const tierLabel = tier ? (tier.charAt(0).toUpperCase() + tier.slice(1)) : 'Free';
     const resetsAt  = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     return NextResponse.json(
       {
-        error:    'Limite giornaliero raggiunto',
+        error:    'Daily limit reached',
         code:     'DAILY_LIMIT_EXCEEDED',
-        detail:   `Il piano ${tierLabel} consente ${limit} ticket ogni 24 ore. Passa a un piano superiore per aumentare il limite.`,
+        detail:   `The ${tierLabel} plan allows ${limit} ticket(s) every 24 hours. Upgrade your plan to increase the limit.`,
         limit,
         current:  ticketsOggi ?? 0,
         resetsAt,

@@ -6,8 +6,8 @@ import NavbarWrapper from "./_components/NavbarWrapper";
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: "LegalMatch",
-  description: "Consulenza legale professionale, semplice e veloce.",
+  title: "All In One Consulting",
+  description: "All your business consultants, in one platform.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

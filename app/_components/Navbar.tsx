@@ -33,13 +33,13 @@ export default function Navbar() {
 
   // Tab per cliente
   const clienteTabs = [
-    { href: '/dashboard', label: 'I miei Ticket', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'My Tickets', icon: LayoutDashboard },
   ];
 
   // Tab per professionista (attivate nello Step 6)
   const profTabs = [
-    { href: '/bacheca',      label: 'Bacheca Ticket',      icon: Briefcase },
-    { href: '/assegnazioni', label: 'Le mie Assegnazioni', icon: LayoutDashboard },
+    { href: '/bacheca',      label: 'Ticket Board',      icon: Briefcase },
+    { href: '/assegnazioni', label: 'My Assignments', icon: LayoutDashboard },
   ];
 
   const tabs = isProf ? profTabs : clienteTabs;
@@ -56,7 +56,7 @@ export default function Navbar() {
           <span className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
             <Scale className="w-4 h-4 text-white" strokeWidth={2.25} />
           </span>
-          <span className="font-bold text-violet-700 text-lg hidden sm:block">LegalMatch</span>
+          <span className="font-bold text-violet-700 text-lg hidden sm:block">All In One Consulting</span>
         </Link>
 
         {/* Nav tabs */}
@@ -91,8 +91,8 @@ export default function Navbar() {
             }`}
           >
             <Plus className="w-4 h-4" strokeWidth={2.5} />
-            <span className="hidden sm:block">Nuovo Ticket</span>
-            <span className="sm:hidden">Nuovo</span>
+            <span className="hidden sm:block">New Ticket</span>
+            <span className="sm:hidden">New</span>
           </Link>
         )}
 

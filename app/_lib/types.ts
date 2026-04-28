@@ -2,7 +2,7 @@
 
 export type RuoloUtente      = 'cliente' | 'professionista' | 'admin';
 export type TipoCliente      = 'privato' | 'azienda';
-export type SubscriptionTier = 'basic' | 'premium';
+export type SubscriptionTier = 'pro' | 'max' | 'enterprise';
 export type TicketTipo       = 'domanda' | 'revisione_documento';
 export type TicketStato      = 'aperto' | 'in_lavorazione' | 'risolto' | 'richiede_info';
 export type TicketPriorita   = 'bassa' | 'normale' | 'urgente';
