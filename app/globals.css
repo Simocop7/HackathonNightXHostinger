@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f0f4f8;
+  --foreground: #0d1e38;
+  --navbar-h: 64px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Override violet → RAL 5013 cobalt blue */
+  --color-violet-50:  #edf2f9;
+  --color-violet-100: #cddaed;
+  --color-violet-200: #9bb5db;
+  --color-violet-300: #6990c9;
+  --color-violet-400: #376bb7;
+  --color-violet-500: #214f96;
+  --color-violet-600: #1b3a6b;
+  --color-violet-700: #122a50;
+  --color-violet-800: #0d1e38;
+  --color-violet-900: #080f1c;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overscroll-behavior: none;
+  overflow-x: clip;
+}
+
+/* Pages below the fixed navbar */
+.page-root {
+  padding-top: var(--navbar-h);
+  min-height: 100vh;
+}
+
+/* Full-height split layout (for /match) */
+.page-root-full {
+  margin-top: var(--navbar-h);
+  height: calc(100vh - var(--navbar-h));
+  overflow: hidden;
+}
+
+/* Swipe card animations */
+.swipe-card {
+  touch-action: none;
+  user-select: none;
+  will-change: transform;
+  cursor: grab;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+.swipe-card.exit-right {
+  transform: translateX(165%) rotate(28deg) !important;
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1) !important;
+}
+
+.swipe-card.exit-left {
+  transform: translateX(-165%) rotate(-28deg) !important;
+  transition: transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1) !important;
+}
+
+.swipe-card.snap-back {
+  transform: translateX(0) rotate(0deg) !important;
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1) !important;
+}
+
+/* Overlays */
+.overlay-like { opacity: 0; transition: opacity 0.1s; }
+.overlay-nope { opacity: 0; transition: opacity 0.1s; }
+
+/* Celebration animation for +50pts */
+@keyframes celebrate {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.celebrate {
+  animation: celebrate 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Chat message slide-in */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg-in {
+  animation: msg-in 0.2s ease;
+}
+
+/* Profile modal slide-in */
+@keyframes profile-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-profile-in {
+  animation: profile-in 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Pulse for confirm button */
+@keyframes pulse-once {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.06); }
+}
+.pulse-once {
+  animation: pulse-once 0.4s ease;
+}
