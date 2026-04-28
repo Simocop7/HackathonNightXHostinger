@@ -2,97 +2,113 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { GraduationCap, Sparkles } from 'lucide-react';
-import { getCurrentUser, getMatchesForUser, subscribeToMatchUpdates } from '../_lib/db';
-import { Utente } from '../_lib/types';
+import { Scale, Plus, LayoutDashboard, Briefcase } from 'lucide-react';
+import { getCurrentUser, subscribeToAssegnazioneUpdates } from '../_lib/db';
+import type { Profilo } from '../_lib/types';
 import Avatar from './Avatar';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [user, setUser] = useState<Utente | null>(null);
-  const [notifCount, setNotifCount] = useState(0);
+  const [user, setUser] = useState<Profilo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadData = async () => {
+    (async () => {
       const u = await getCurrentUser();
-      if (cancelled) return;
-      setUser(u);
-      if (!u) { setNotifCount(0); return; }
-      const matches = await getMatchesForUser(u.id);
-      if (cancelled) return;
-      setNotifCount(matches.filter((m) => m.seekerId === u.id && m.stato === 'richiesta').length);
-    };
-
-    loadData();
+      if (!cancelled) setUser(u);
+    })();
     return () => { cancelled = true; };
   }, [pathname]);
 
-  // Separate effect for realtime subscription — depends on user id
+  // Aggiorna il profilo quando cambiano le assegnazioni (es. nuovi ticket)
   useEffect(() => {
     if (!user?.id) return;
-    const unsub = subscribeToMatchUpdates(user.id, async () => {
-      const matches = await getMatchesForUser(user.id);
-      setNotifCount(matches.filter((m) => m.seekerId === user.id && m.stato === 'richiesta').length);
+    return subscribeToAssegnazioneUpdates(user.id, async () => {
+      const u = await getCurrentUser();
+      setUser(u);
     });
-    return unsub;
   }, [user?.id]);
 
-  const tabs = [
-    { href: '/aiuta', label: 'Aiuta qualcuno' },
-    { href: '/match', label: 'Match', badge: notifCount },
-    { href: '/richiedi', label: 'Richiedi aiuto' },
+  const isProf = user?.ruolo === 'professionista';
+
+  // Tab per cliente
+  const clienteTabs = [
+    { href: '/dashboard', label: 'I miei Ticket', icon: LayoutDashboard },
   ];
+
+  // Tab per professionista (attivate nello Step 6)
+  const profTabs = [
+    { href: '/bacheca',      label: 'Bacheca Ticket',      icon: Briefcase },
+    { href: '/assegnazioni', label: 'Le mie Assegnazioni', icon: LayoutDashboard },
+  ];
+
+  const tabs = isProf ? profTabs : clienteTabs;
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 h-16">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center gap-6">
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center gap-4">
+
         {/* Logo */}
-        <Link href="/aiuta" className="flex items-center gap-2 shrink-0">
+        <Link
+          href={isProf ? '/bacheca' : '/dashboard'}
+          className="flex items-center gap-2 shrink-0 mr-2"
+        >
           <span className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.25} />
+            <Scale className="w-4 h-4 text-white" strokeWidth={2.25} />
           </span>
-          <span className="font-bold text-violet-700 text-lg">StudyMatch</span>
+          <span className="font-bold text-violet-700 text-lg hidden sm:block">LegalMatch</span>
         </Link>
 
-        {/* Tabs */}
+        {/* Nav tabs */}
         <div className="flex items-center gap-1 flex-1">
-          {tabs.map(({ href, label, badge }) => {
-            const active = pathname === href;
+          {tabs.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(href + '/');
             return (
               <Link
                 key={href}
                 href={href}
-                className={`relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   active
                     ? 'bg-violet-50 text-violet-700'
                     : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
+                <Icon className="w-4 h-4" strokeWidth={2} />
                 {label}
-                {badge != null && badge > 0 && (
-                  <span className="bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
-                )}
               </Link>
             );
           })}
         </div>
 
-        {/* Profile */}
+        {/* CTA "Nuovo Ticket" — solo clienti */}
+        {!isProf && (
+          <Link
+            href="/ticket/nuovo"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors shrink-0 ${
+              pathname === '/ticket/nuovo'
+                ? 'bg-violet-700 text-white'
+                : 'bg-violet-600 hover:bg-violet-700 text-white'
+            }`}
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            <span className="hidden sm:block">Nuovo Ticket</span>
+            <span className="sm:hidden">Nuovo</span>
+          </Link>
+        )}
+
+        {/* Avatar + nome utente */}
         {user && (
           <Link
             href="/profilo"
             className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-colors shrink-0"
           >
             <Avatar user={user} className="w-8 h-8" textClassName="text-xs font-bold" />
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-gray-700 leading-none">{user.nome}</p>
-              <p className="text-xs text-violet-600 font-medium mt-0.5 flex items-center justify-end gap-1">
-                <Sparkles className="w-3 h-3" strokeWidth={2.5} />
-                {user.punti} pt
+              <p className="text-xs text-gray-400 mt-0.5">
+                {user.ruolo === 'professionista'
+                  ? (user.qualifica ?? 'Professionista')
+                  : (user.ragioneSociale ?? (user.tipoCliente === 'azienda' ? 'Azienda' : 'Privato'))}
               </p>
             </div>
           </Link>

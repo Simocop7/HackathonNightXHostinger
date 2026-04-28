@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 
-const NO_NAVBAR = ['/', '/setup'];
+const NO_NAVBAR = ['/', '/setup', '/ticket/nuovo'];
 
 export default function NavbarWrapper() {
   const pathname = usePathname();

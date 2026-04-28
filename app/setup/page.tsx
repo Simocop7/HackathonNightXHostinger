@@ -1,120 +1,147 @@
 'use client';
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Search, MessageSquareText, Building2, BookMarked, ArrowRight } from 'lucide-react';
-import { getCurrentUser, updateUser, uploadAvatar } from '../_lib/db';
-import TagInput from '../_components/TagInput';
+import { ArrowRight, Building2, User, Scale } from 'lucide-react';
+import { getCurrentUser, updateProfilo, uploadAvatar } from '../_lib/db';
+import type { Profilo, TipoCliente, SubscriptionTier } from '../_lib/types';
 import Avatar from '../_components/Avatar';
-import { Utente } from '../_lib/types';
 
 export default function SetupPage() {
   const router = useRouter();
-  const [baseUser, setBaseUser] = useState<Utente | null>(null);
-  const [facolta, setFacolta] = useState('');
-  const [cercaAiutoIn, setCercaAiutoIn] = useState<string[]>([]);
-  const [puoAiutareIn, setPuoAiutareIn] = useState<string[]>([]);
-  const [biografia, setBiografia] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [foto, setFoto] = useState<string | undefined>();
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [error, setError] = useState('');
-  const [ready, setReady] = useState(false);
+  const [profilo, setProfilo] = useState<Profilo | null>(null);
+  const [ready, setReady]     = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError]     = useState('');
+
+  // Campi comuni
+  const [biografia, setBiografia] = useState('');
+  const [linkedin, setLinkedin]   = useState('');
+  const [foto, setFoto]           = useState<string | undefined>();
+  const [fotoFile, setFotoFile]   = useState<File | null>(null);
+
+  // Campi cliente
+  const [tipoCliente, setTipoCliente]   = useState<TipoCliente>('privato');
+  const [ragioneSociale, setRagioneSociale] = useState('');
+  const [partitaIva, setPartitaIva]     = useState('');
+  const [codiceFiscale, setCodiceFiscale] = useState('');
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('basic');
+
+  // Campi professionista
+  const [qualifica, setQualifica]             = useState('');
+  const [ordineProfessionale, setOrdine]      = useState('');
+  const [areeInput, setAreeInput]             = useState('');
+  const [areeLegali, setAreeLegali]           = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const user = await getCurrentUser();
-        if (!user) { router.replace('/'); return; }
-        if (user.profiloCompleto) { router.replace('/aiuta'); return; }
-        setBaseUser(user);
-      } catch {
-        router.replace('/');
-        return;
-      }
+        const u = await getCurrentUser();
+        if (!u) { router.replace('/'); return; }
+        if (u.profiloCompleto) { router.replace('/dashboard'); return; }
+        setProfilo(u);
+      } catch { router.replace('/'); return; }
       setReady(true);
     })();
   }, [router]);
 
-  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFotoFile(file);
-    // Mostra preview locale immediata
     const reader = new FileReader();
     reader.onload = (ev) => setFoto(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
 
+  const addArea = () => {
+    const v = areeInput.trim();
+    if (v && !areeLegali.includes(v)) setAreeLegali([...areeLegali, v]);
+    setAreeInput('');
+  };
+
+  const removeArea = (a: string) => setAreeLegali(areeLegali.filter((x) => x !== a));
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!facolta.trim()) { setError('Inserisci la tua facoltà.'); return; }
-    if (puoAiutareIn.length === 0) { setError('Aggiungi almeno una materia in cui puoi aiutare.'); return; }
+    if (!profilo) return;
+
+    const isProf = profilo.ruolo === 'professionista';
+
+    if (isProf) {
+      if (!qualifica.trim()) { setError('Inserisci la tua qualifica.'); return; }
+      if (!ordineProfessionale.trim()) { setError("Inserisci l'ordine professionale."); return; }
+      if (areeLegali.length === 0) { setError('Aggiungi almeno un\'area legale di competenza.'); return; }
+    } else {
+      if (tipoCliente === 'azienda' && !ragioneSociale.trim()) {
+        setError('Inserisci la ragione sociale.'); return;
+      }
+    }
 
     setSubmitting(true);
     setError('');
 
-    const user = await getCurrentUser();
-    if (!user) { router.replace('/'); return; }
-
-    let fotoUrl = user.foto;
+    let fotoUrl = profilo.foto;
     if (fotoFile) {
-      try {
-        fotoUrl = await uploadAvatar(user.id, fotoFile);
-      } catch {
-        // foto upload non bloccante
-      }
+      try { fotoUrl = await uploadAvatar(profilo.id, fotoFile); } catch { /* non bloccante */ }
     }
 
-    await updateUser({
-      ...user,
-      facolta: facolta.trim(),
-      cercaAiutoIn,
-      puoAiutareIn,
-      biografia: biografia.trim(),
-      foto: fotoUrl,
-      linkedin: linkedin.trim() || undefined,
-      profiloCompleto: true,
+    await updateProfilo({
+      ...profilo,
+      biografia:           biografia.trim(),
+      foto:                fotoUrl,
+      linkedin:            linkedin.trim() || undefined,
+      profiloCompleto:     true,
+      // Clienti
+      tipoCliente:         isProf ? undefined : tipoCliente,
+      ragioneSociale:      isProf || tipoCliente !== 'azienda' ? undefined : ragioneSociale.trim() || undefined,
+      partitaIva:          isProf || tipoCliente !== 'azienda' ? undefined : partitaIva.trim()     || undefined,
+      codiceFiscale:       isProf || tipoCliente !== 'privato' ? undefined : codiceFiscale.trim()  || undefined,
+      subscriptionTier:    isProf ? undefined : subscriptionTier,
+      // Professionisti
+      qualifica:           isProf ? qualifica.trim() : undefined,
+      ordineProfessionale: isProf ? ordineProfessionale.trim() : undefined,
+      areeLegali:          isProf ? areeLegali : [],
     });
-    router.push('/aiuta');
+
+    router.push('/dashboard');
   };
 
-  if (!ready || !baseUser) return null;
+  if (!ready || !profilo) return null;
 
-  const preview: Utente = {
-    ...baseUser,
-    facolta: facolta || 'La tua facoltà',
-    cercaAiutoIn,
-    puoAiutareIn,
-    biografia,
-    foto,
-  };
+  const isProf = profilo.ruolo === 'professionista';
+  const previewUser = { ...profilo, foto };
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-start justify-center py-10 px-4">
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+
         {/* LEFT — form */}
         <div>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Completa il profilo</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <Scale className="w-5 h-5 text-violet-600" strokeWidth={2} />
+              <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide">LegalMatch</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {isProf ? 'Completa il profilo professionale' : 'Completa il tuo profilo'}
+            </h1>
             <p className="text-gray-500 text-sm mt-1">
-              Dicci in cosa sei forte e cosa vuoi imparare
+              {isProf
+                ? 'Inserisci le tue credenziali professionali per iniziare a gestire i ticket'
+                : 'Inserisci i dati per iniziare a ricevere consulenza legale'}
             </p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-sm p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Foto */}
+
+              {/* Foto profilo */}
               <div className="flex items-center gap-4">
                 <label className="relative cursor-pointer group shrink-0">
                   <div className="w-16 h-16 rounded-full overflow-hidden bg-violet-100 flex items-center justify-center shadow">
                     {foto
                       ? <img src={foto} className="w-full h-full object-cover" alt="" />
-                      : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7 text-violet-400">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
-                    }
+                      : <User className="w-7 h-7 text-violet-400" strokeWidth={1.5} />}
                   </div>
                   <div className="absolute bottom-0 right-0 w-6 h-6 bg-violet-600 rounded-full flex items-center justify-center border-2 border-white">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3 text-white">
@@ -130,145 +157,219 @@ export default function SetupPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Facoltà / Corso di laurea *</label>
-                <input
-                  type="text"
-                  value={facolta}
-                  onChange={(e) => setFacolta(e.target.value)}
-                  placeholder="es. Ingegneria Informatica"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50"
-                />
-              </div>
+              {/* ── SEZIONE CLIENTE ─────────────────────────────────────── */}
+              {!isProf && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Tipo di cliente</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'privato' as TipoCliente, label: 'Persona fisica', Icon: User },
+                        { value: 'azienda' as TipoCliente, label: 'Azienda / Studio', Icon: Building2 },
+                      ].map(({ value, label, Icon }) => (
+                        <button key={value} type="button" onClick={() => setTipoCliente(value)}
+                          className={`flex items-center gap-2 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                            tipoCliente === value
+                              ? 'border-violet-600 bg-violet-50 text-violet-700'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" strokeWidth={2} />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-2">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" strokeWidth={2.5} />
-                  In cosa puoi aiutare? *
-                </label>
-                <TagInput tags={puoAiutareIn} onChange={setPuoAiutareIn} placeholder="es. Python, Storia dell'Arte..." />
-                <p className="text-xs text-gray-400 mt-1">Le richieste di aiuto che vedi saranno basate su queste materie</p>
-              </div>
+                  {tipoCliente === 'azienda' && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Ragione Sociale *</label>
+                        <input type="text" value={ragioneSociale} onChange={(e) => setRagioneSociale(e.target.value)}
+                          placeholder="es. Acme Srl"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Partita IVA <span className="font-normal text-gray-400">(opzionale)</span>
+                        </label>
+                        <input type="text" value={partitaIva} onChange={(e) => setPartitaIva(e.target.value)}
+                          placeholder="12345678901"
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
+                      </div>
+                    </>
+                  )}
 
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-2">
-                  <Search className="w-3.5 h-3.5 text-rose-500" strokeWidth={2.5} />
-                  In cosa cerchi aiuto? <span className="font-normal text-gray-400">(opzionale)</span>
-                </label>
-                <TagInput tags={cercaAiutoIn} onChange={setCercaAiutoIn} placeholder="es. Analisi 2, Fisica..." />
-                <p className="text-xs text-gray-400 mt-1">Usato per pre-compilare le tue richieste future</p>
-              </div>
+                  {tipoCliente === 'privato' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Codice Fiscale <span className="font-normal text-gray-400">(opzionale)</span>
+                      </label>
+                      <input type="text" value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)}
+                        placeholder="RSSMRA80A01H501Z"
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
+                    </div>
+                  )}
 
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Piano di abbonamento</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'basic'   as SubscriptionTier, label: 'Basic',   sub: '1 ticket / giorno' },
+                        { value: 'premium' as SubscriptionTier, label: 'Premium', sub: '5 ticket / giorno' },
+                      ].map(({ value, label, sub }) => (
+                        <button key={value} type="button" onClick={() => setSubscriptionTier(value)}
+                          className={`py-3 px-4 rounded-xl border-2 text-sm transition-all text-left ${
+                            subscriptionTier === value
+                              ? 'border-violet-600 bg-violet-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <p className={`font-semibold ${subscriptionTier === value ? 'text-violet-700' : 'text-gray-700'}`}>{label}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── SEZIONE PROFESSIONISTA ──────────────────────────────── */}
+              {isProf && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Qualifica *</label>
+                    <select value={qualifica} onChange={(e) => setQualifica(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50">
+                      <option value="">Seleziona qualifica</option>
+                      <option>Avvocato</option>
+                      <option>Notaio</option>
+                      <option>Commercialista</option>
+                      <option>Consulente del Lavoro</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Ordine professionale *</label>
+                    <input type="text" value={ordineProfessionale} onChange={(e) => setOrdine(e.target.value)}
+                      placeholder="es. Ordine degli Avvocati di Milano"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Aree legali di competenza *</label>
+                    <div className="flex gap-2 mb-2">
+                      <select value={areeInput} onChange={(e) => setAreeInput(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50">
+                        <option value="">Seleziona area…</option>
+                        {['Diritto del Lavoro','Diritto Civile','Diritto Commerciale','Diritto Penale',
+                          'Diritto Tributario / Fiscale','Diritto di Famiglia','Diritto Societario',
+                          'Contrattualistica','Privacy / GDPR','Diritto Immobiliare','Proprietà Intellettuale',
+                        ].map((a) => <option key={a}>{a}</option>)}
+                      </select>
+                      <button type="button" onClick={addArea}
+                        className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition-colors">
+                        +
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {areeLegali.map((a) => (
+                        <span key={a} className="inline-flex items-center gap-1.5 bg-violet-100 text-violet-700 px-3 py-1.5 rounded-full text-xs font-medium">
+                          {a}
+                          <button type="button" onClick={() => removeArea(a)} className="hover:text-violet-900 font-bold">×</button>
+                        </span>
+                      ))}
+                      {areeLegali.length === 0 && (
+                        <p className="text-xs text-gray-400">Nessuna area aggiunta</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ── CAMPI COMUNI ─────────────────────────────────────────── */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  Bio <span className="font-normal text-gray-400">(opzionale)</span>
+                  Biografia <span className="font-normal text-gray-400">(opzionale)</span>
                 </label>
-                <textarea
-                  value={biografia}
-                  onChange={(e) => setBiografia(e.target.value.slice(0, 300))}
-                  placeholder="Presentati in poche parole..."
+                <textarea value={biografia} onChange={(e) => setBiografia(e.target.value.slice(0, 400))}
+                  placeholder={isProf
+                    ? "Descrivi la tua esperienza professionale…"
+                    : "Descrivi brevemente la tua situazione o il tipo di assistenza che cerchi…"}
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50 resize-none"
-                />
-                <p className="text-right text-xs text-gray-400 mt-1">{biografia.length}/300</p>
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50 resize-none" />
+                <p className="text-right text-xs text-gray-400 mt-1">{biografia.length}/400</p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   LinkedIn <span className="font-normal text-gray-400">(opzionale)</span>
                 </label>
-                <input
-                  type="url"
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
+                <input type="url" value={linkedin} onChange={(e) => setLinkedin(e.target.value)}
                   placeholder="https://linkedin.com/in/tuoprofilo"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50"
-                />
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50" />
               </div>
 
               {error && <p className="text-rose-500 text-xs text-center">{error}</p>}
 
-              <button
-                type="submit"
-                disabled={submitting}
+              <button type="submit" disabled={submitting}
                 className="w-full py-3 bg-gradient-to-r from-violet-600 to-violet-800 text-white font-semibold rounded-xl shadow-md hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                {submitting ? 'Salvataggio…' : 'Inizia'}
+                {submitting ? 'Salvataggio…' : 'Inizia →'}
                 {!submitting && <ArrowRight className="w-4 h-4" strokeWidth={2.5} />}
               </button>
             </form>
           </div>
         </div>
 
-        {/* RIGHT — live preview */}
+        {/* RIGHT — preview */}
         <div className="hidden lg:block">
-          <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Anteprima profilo</h2>
-            <p className="text-xs text-gray-400 mt-1">Così ti vedranno gli altri studenti</p>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Anteprima profilo</p>
+          <div className="bg-white rounded-3xl shadow-sm overflow-hidden sticky top-8">
             <div className="bg-gradient-to-br from-violet-50 to-violet-100 flex flex-col items-center py-8 px-4">
-              <Avatar user={preview} className="w-20 h-20 shadow-lg" textClassName="text-2xl font-bold" />
-              <h3 className="mt-3 text-lg font-bold text-gray-800">
-                {preview.nome} {preview.cognome}
-              </h3>
-              <p className="text-sm text-gray-500">@{preview.username}</p>
-              <div className="mt-2 flex flex-wrap gap-2 justify-center">
-                <span className="inline-flex items-center gap-1 text-xs bg-white px-2.5 py-1 rounded-full text-gray-600 shadow-sm">
-                  <Building2 className="w-3 h-3" strokeWidth={2.25} />
-                  {preview.universita}
+              <Avatar user={previewUser} className="w-20 h-20 shadow-lg" textClassName="text-2xl font-bold" />
+              <h3 className="mt-3 text-lg font-bold text-gray-800">{profilo.nome} {profilo.cognome}</h3>
+              <p className="text-sm text-gray-500">@{profilo.username}</p>
+              {isProf && qualifica && (
+                <span className="mt-2 text-xs bg-violet-600 text-white px-3 py-1 rounded-full font-medium">{qualifica}</span>
+              )}
+              {!isProf && (
+                <span className={`mt-2 text-xs px-3 py-1 rounded-full font-medium ${
+                  tipoCliente === 'azienda' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {tipoCliente === 'azienda' ? '🏢 Azienda' : '👤 Privato'}
                 </span>
-                {facolta && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-white px-2.5 py-1 rounded-full text-gray-600 shadow-sm">
-                    <BookMarked className="w-3 h-3" strokeWidth={2.25} />
-                    {facolta}
-                  </span>
-                )}
-              </div>
+              )}
             </div>
 
-            <div className="px-5 py-4 space-y-4">
-              {puoAiutareIn.length > 0 && (
+            <div className="px-5 py-4 space-y-3 text-sm">
+              {!isProf && subscriptionTier && (
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500 text-xs">Piano</span>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    subscriptionTier === 'premium'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {subscriptionTier === 'premium' ? '⭐ Premium' : 'Basic'}
+                  </span>
+                </div>
+              )}
+              {isProf && areeLegali.length > 0 && (
                 <div>
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    <Sparkles className="w-3 h-3 text-emerald-500" strokeWidth={2.5} />
-                    Può aiutare in
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {puoAiutareIn.map((s) => (
-                      <span key={s} className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-medium">{s}</span>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Competenze</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {areeLegali.map((a) => (
+                      <span key={a} className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full">{a}</span>
                     ))}
                   </div>
                 </div>
               )}
-
-              {cercaAiutoIn.length > 0 && (
-                <div>
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    <Search className="w-3 h-3 text-rose-500" strokeWidth={2.5} />
-                    Cerca aiuto in
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {cercaAiutoIn.map((s) => (
-                      <span key={s} className="text-xs bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full font-medium">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {biografia && (
-                <div>
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    <MessageSquareText className="w-3 h-3" strokeWidth={2.5} />
-                    Bio
-                  </p>
-                  <p className="text-sm text-gray-600 leading-relaxed">{biografia}</p>
-                </div>
+                <p className="text-xs text-gray-500 leading-relaxed pt-1">{biografia}</p>
               )}
-
-              {!puoAiutareIn.length && !cercaAiutoIn.length && !biografia && (
-                <p className="text-sm text-gray-400 text-center py-4">Compila il form per vedere l&apos;anteprima</p>
+              {!isProf && !areeLegali.length && !biografia && (
+                <p className="text-xs text-gray-400 text-center py-2">Compila il form per vedere l&apos;anteprima</p>
               )}
             </div>
           </div>
