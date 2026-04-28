@@ -250,7 +250,7 @@ export async function getTicketsProfessionista(
   return (data ?? [])
     .map(mapTicket)
     .filter(
-      (t) =>
+      (t: Ticket) =>
         t.professionistaId === professionista.id ||
         aree.has(t.areaLegale.toLowerCase()),
     );
