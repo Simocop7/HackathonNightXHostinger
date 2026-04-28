@@ -180,9 +180,9 @@ export async function getSeedProfili(): Promise<Profilo[]> {
   return (data ?? []).map(mapProfilo);
 }
 
-export async function updateProfilo(updated: Profilo): Promise<void> {
+export async function updateProfilo(updated: Profilo): Promise<{ error: string | null }> {
   const supabase = getSupabaseClient();
-  await supabase.from('profiles').update({
+  const { error } = await supabase.from('profiles').update({
     nome:                 updated.nome,
     cognome:              updated.cognome,
     username:             updated.username,
@@ -202,6 +202,7 @@ export async function updateProfilo(updated: Profilo): Promise<void> {
     ordine_professionale: updated.ordineProfessionale ?? null,
     qualifica:            updated.qualifica          ?? null,
   }).eq('id', updated.id);
+  return { error: error?.message ?? null };
 }
 
 export async function clearCurrentUser(): Promise<void> {

@@ -37,7 +37,7 @@ exception when duplicate_object then null; end $$;
 
 -- Piano di abbonamento del cliente
 do $$ begin
-  create type subscription_tier as enum ('basic', 'premium');
+  create type subscription_tier as enum ('pro', 'max', 'enterprise');
 exception when duplicate_object then null; end $$;
 
 -- Tipo di ticket legale

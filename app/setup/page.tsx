@@ -86,7 +86,7 @@ export default function SetupPage() {
       try { fotoUrl = await uploadAvatar(profilo.id, fotoFile); } catch { /* non bloccante */ }
     }
 
-    await updateProfilo({
+    const { error: updateErr } = await updateProfilo({
       ...profilo,
       biografia:           biografia.trim(),
       foto:                fotoUrl,
@@ -103,6 +103,7 @@ export default function SetupPage() {
       ordineProfessionale: isProf ? ordineProfessionale.trim() : undefined,
       areeLegali:          isProf ? areeLegali : [],
     });
+    if (updateErr) { setError(`Salvataggio fallito: ${updateErr}`); setSubmitting(false); return; }
 
     router.push('/dashboard');
   };

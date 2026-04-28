@@ -52,14 +52,16 @@ export default function ProfiloPage() {
     if (fotoFile) {
       try { fotoUrl = await uploadAvatar(user.id, fotoFile); } catch { /* non bloccante */ }
     }
-    await updateProfilo({
+    const { error: updateErr } = await updateProfilo({
       ...user,
       biografia: editBio.trim(),
       linkedin:  editLinkedin.trim() || undefined,
       foto:      fotoUrl,
     });
-    setUser({ ...user, biografia: editBio.trim(), linkedin: editLinkedin.trim() || undefined, foto: fotoUrl });
-    setIsEditing(false);
+    if (!updateErr) {
+      setUser({ ...user, biografia: editBio.trim(), linkedin: editLinkedin.trim() || undefined, foto: fotoUrl });
+      setIsEditing(false);
+    }
     setSaving(false);
   };
 
