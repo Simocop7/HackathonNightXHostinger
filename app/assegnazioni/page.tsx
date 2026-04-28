@@ -85,7 +85,7 @@ export default function AssegnazioniPage() {
               <Sparkles className="w-7 h-7" strokeWidth={2} />
             </div>
             <div>
-              <p className="text-violet-200 text-sm">Punti UniversityBox accumulati</p>
+              <p className="text-violet-200 text-sm">Punti LegalMatch accumulati</p>
               <p className="text-5xl font-bold leading-none mt-0.5">{puntiTotali}</p>
             </div>
           </div>
