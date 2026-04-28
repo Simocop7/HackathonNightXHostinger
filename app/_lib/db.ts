@@ -398,6 +398,34 @@ export async function sendMessage(
   return mapMessaggio(data);
 }
 
+/**
+ * Upload di un documento di risposta dal professionista.
+ * Path: prof/{profId}/{ticketId}/{uuid}.{ext}
+ * I path prefissati con 'prof/' si distinguono dai file del cliente
+ * nell'array ticket.allegati (cliente usa '{clienteId}/{ticketId}/...').
+ */
+export async function uploadAllegatoProfessionista(
+  ticketId: string,
+  profId:   string,
+  file:     File,
+): Promise<string> {
+  const supabase = getSupabaseClient();
+  const ext  = file.name.split('.').pop() ?? 'bin';
+  const path = `prof/${profId}/${ticketId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('allegati')
+    .upload(path, file, { upsert: false, cacheControl: '3600' });
+  if (error) throw error;
+  const ticket = await getTicket(ticketId);
+  if (ticket) {
+    await supabase
+      .from('tickets')
+      .update({ allegati: [...ticket.allegati, path] })
+      .eq('id', ticketId);
+  }
+  return path;
+}
+
 // ── Avatar upload ─────────────────────────────────────────────────────────────
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
