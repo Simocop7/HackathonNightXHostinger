@@ -1,98 +1,90 @@
-# StudyMatch
+# All In One Consulting
 
-**Trova aiuto. Dai aiuto. Guadagna.**
+**All your business consultants, in one platform.**
 
-Web app desktop-first per matchare studenti universitari su bisogni di aiuto momentanei e specifici. Sviluppata per l'hackathon BLAB Bocconi in collaborazione con **UniversityBOX** e **Hostinger**.
-
----
-
-## Idea
-
-Gli studenti hanno spesso bisogno di aiuto su materie specifiche ("ho l'esame domani e non capisco gli integrali") ma non trovano facilmente chi può aiutarli. StudyMatch risolve questo con:
-
-- **Richieste specifiche** — posti un problema concreto con materia, descrizione e scadenza
-- **Swipe sulle richieste** — gli helper scorrono le richieste e offrono aiuto in un click
-- **Rewarding reale** — chi aiuta guadagna punti → sconti UniversityBOX (5% / 10% / 20%)
+B2B SaaS platform that connects SMEs with verified legal, tax, safety, and financial consultants. Clients open tickets and get a response from a specialist within hours. Built for the Hostinger Hackathon Night.
 
 ---
 
 ## Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Styling**: Tailwind CSS
-- **Storage**: `localStorage` — nessun backend
-- **Lingua**: Italiano
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Styling**: Tailwind CSS v4
+- **Backend**: Supabase (Postgres + Auth + Storage + Realtime)
+- **Language**: English UI
 
 ---
 
-## Struttura
+## Routes
 
 ```
-/           Registrazione (split-screen con hero sponsor)
-/setup      Setup profilo con anteprima live
-/aiuta      "Aiuta qualcuno" — swipe su richieste aperte
-/match      "Match" — messenger split-view con sezioni ruolo
-/richiedi   "Richiedi aiuto" — form pubblica richiesta
-/profilo    Dashboard punti + coupon UniversityBOX
+/              Login / Register
+/setup         Complete profile (client or consultant)
+/dashboard     Client — ticket list + detail panel
+/bacheca       Consultant — open tickets board
+/ticket/nuovo  Open a new ticket
+/aiuta         Consultant — respond to a ticket
+/assegnazioni  Assignment management
+/chat/:id      Real-time chat between client and consultant
+/notifiche     Notifications
+/profilo       User profile + points
+/piani         Plans & pricing
 ```
 
 ---
 
-## Flusso principale
+## User roles
 
-1. **Registrati** e completa il profilo (competenze + cosa cerchi)
-2. **Richiedi aiuto** — pubblica una richiesta con materia e descrizione del problema
-3. **Aiuta qualcuno** — swipa le richieste nelle tue materie, premi ♥ o usa `→` per offrire aiuto
-4. **Match** — accetta le offerte ricevute, chatta nella sezione "📚 Ricevi aiuto"
-5. **Conferma sessione** — il richiedente conferma → l'helper guadagna +50 punti UniversityBOX
-
----
-
-## Sezione Match
-
-Il pannello sinistro è diviso in sezioni chiare:
-
-- **Offerte ricevute** — qualcuno ha offerto di aiutarti, accetta o rifiuta inline
-- **📚 Ricevo aiuto** — conversazioni attive in cui sei il richiedente; qui trovi il bottone "Conferma sessione"
-- **🎓 Sto aiutando** — conversazioni in cui sei l'helper; i punti arrivano quando il richiedente conferma
-- **Non disponibili** — offerte rifiutate
+| Role | Flow |
+|------|------|
+| **Cliente** | Register → Setup (plan, type) → Dashboard → Open tickets → Chat with consultant |
+| **Professionista** | Register → Setup (areas, credentials) → Bacheca → Pick tickets → Respond + Chat |
 
 ---
 
-## Avvio locale
+## Subscription plans
+
+| Plan | Price | Response | Doc review | Video call |
+|------|-------|----------|------------|------------|
+| Pro | €999/year | 24h | 50 pages/mo | 30 min |
+| Max | €1,499/year | 12h | 100 pages/mo | 1 hour |
+| Enterprise | €2,999/year | 3h | 300 pages/mo | 2 hours |
+
+All plans include the **Legal Vault** — a library of pre-approved templates (NDA, T&Cs, Cookie Policy, etc.).
+
+**Add-on tokens** available for Pro & Max: +10 pages (€29/mo), +30 call minutes (€39/mo), +50 pages (€99/mo).
+
+---
+
+## Local setup
 
 ```bash
 npm install
 npm run dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000).
+Copy `.env.local` with your Supabase credentials:
 
-Al primo avvio vengono caricati automaticamente 9 utenti seed (inclusi 2 Bocconi) e 7 richieste aperte per una demo funzionante senza registrare altri account.
-
-Per resettare i dati seed: `localStorage.clear()` dalla console del browser.
-
----
-
-## Demo (90 secondi)
-
-1. Apri → split-screen, badge UniversityBOX e Hostinger visibili prima ancora di registrarsi
-2. Registrati + setup in 20 sec — anteprima profilo si aggiorna live
-3. **Richiedi aiuto**: 3 campi, pubblica in 5 sec
-4. **Aiuta qualcuno**: premi `→` su una richiesta seed → card vola, match creato
-5. **Match**: accetta offerta ricevuta inline → chat nel pannello destro, sezione "📚 Ricevo aiuto"
-6. Scrivi 2 messaggi → "Conferma sessione svolta" → animazione +50 punti
-7. **Profilo**: coupon UniversityBOX sbloccato visibile
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
 
 ---
 
-## Scoring
+## Supabase setup
 
-| Punti | Livello | Sconto UniversityBOX |
-|-------|---------|----------------------|
-| 0–49  | 🌱 Novizio | — |
-| 50–199 | 🥉 Collaboratore | 5% |
-| 200–499 | 🥈 Esperto | 10% |
-| 500+ | 🥇 Mentore | 20% |
+1. Run `SQL/schema.sql` in the Supabase SQL Editor (creates all tables, triggers, RLS policies, storage buckets)
+2. **Authentication → Settings → disable "Enable email confirmations"**
+3. If upgrading an existing DB, also run `SQL/fix_subscription_tier_enum.sql`
 
-Solo l'helper guadagna punti (+50 per sessione confermata dal richiedente).
+---
+
+## Key features
+
+- **Auto-assignment** — tickets are automatically routed to a matching consultant on creation
+- **Realtime** — ticket status and chat update live via Supabase Realtime
+- **File attachments** — clients and consultants upload documents to private Supabase Storage
+- **Points system** — consultants earn +50 points per confirmed session via atomic Postgres RPC
+- **Rate limiting** — 1 active ticket per client per day (enforced via partial unique index)
